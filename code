@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Fishing Logbook</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+
+    body {
+      margin: 0;
+      padding: 30px;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      box-shadow: 0px 0px 20px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 15px;
+    }
+
+    .row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .field {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 25px;
+      background: #22c55e;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #preview {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    #preview img {
+      width: 180px;
+      border-radius: 10px;
+      border: 2px solid #475569;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>🎣 Registro de Pesca</h1>
+
+    <div class="row">
+
+      <div class="field">
+        <label>Espécie do Peixe</label>
+        <input type="text" id="fish">
+      </div>
+
+      <div class="field">
+        <label>Peso (kg)</label>
+        <input type="number" id="weight" step="0.01">
+      </div>
+
+      <div class="field">
+        <label>Tamanho (cm)</label>
+        <input type="number" id="size">
+      </div>
+
+    </div>
+
+    <div class="row">
+
+      <div class="field">
+        <label>Isca Utilizada</label>
+        <input type="text" id="bait">
+      </div>
+
+      <div class="field">
+        <label>Clima</label>
+
+        <select id="weather">
+          <option>Ensolarado</option>
+          <option>Nublado</option>
+          <option>Chuvoso</option>
+          <option>Ventando</option>
+        </select>
+
+      </div>
+
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="date">
+      </div>
+
+    </div>
+
+    <div class="row">
+
+      <div class="field">
+        <label>Local</label>
+        <input type="text" id="location">
+      </div>
+
+      <div class="field">
+        <label>Horário</label>
+        <input type="time" id="time">
+      </div>
+
+    </div>
+
+    <label>Observações</label>
+    <textarea id="notes"></textarea>
+
+    <label>Foto da Captura</label>
+    <input type="file" id="photo" accept="image/*">
+
+    <div id="preview"></div>
+
+    <button onclick="salvarPesca()">
+      SALVAR REGISTRO E GERAR PDF
+    </button>
+
+  </div>
+
+  <script>
+
+    const photoInput = document.getElementById('photo');
+    const preview = document.getElementById('preview');
+
+    let imageBase64 = '';
+
+    // PREVIEW DA IMAGEM
+
+    photoInput.addEventListener('change', function(event) {
+
+      const file = event.target.files[0];
+
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+
+        imageBase64 = e.target.result;
+
+        preview.innerHTML = `
+          <img src="${imageBase64}">
+        `;
+      }
+
+      reader.readAsDataURL(file);
+    });
+
+    // GERAR PDF
+
+    async function salvarPesca() {
+
+      const fish = document.getElementById('fish').value;
+      const weight = document.getElementById('weight').value;
+      const size = document.getElementById('size').value;
+      const bait = document.getElementById('bait').value;
+      const weather = document.getElementById('weather').value;
+      const date = document.getElementById('date').value;
+      const location = document.getElementById('location').value;
+      const time = document.getElementById('time').value;
+      const notes = document.getElementById('notes').value;
+
+      const { jsPDF } = window.jspdf;
+
+      const doc = new jsPDF();
+
+      // CABEÇALHO
+
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, 210, 40, "F");
+
+      doc.setTextColor(255, 255, 255);
+
+      doc.setFontSize(24);
+      doc.text("FISHING LOGBOOK", 58, 20);
+
+      doc.setFontSize(11);
+      doc.text("Relatório de Registro de Pesca", 68, 30);
+
+      // BORDA PRINCIPAL
+
+      doc.setDrawColor(120);
+      doc.roundedRect(10, 45, 190, 235, 3, 3);
+
+      doc.setTextColor(0, 0, 0);
+
+      let y = 60;
+
+      // TÍTULO INFORMAÇÕES
+
+      doc.setFillColor(230, 230, 230);
+      doc.rect(15, y - 7, 180, 10, "F");
+
+      doc.setFontSize(14);
+      doc.text("Informações da Captura", 20, y);
+
+      y += 15;
+
+      doc.setFontSize(12);
+
+      doc.text(`Espécie do Peixe: ${fish}`, 20, y);
+      y += 10;
+
+      doc.text(`Peso: ${weight} kg`, 20, y);
+      doc.text(`Tamanho: ${size} cm`, 110, y);
+
+      y += 10;
+
+      doc.text(`Isca Utilizada: ${bait}`, 20, y);
+      doc.text(`Clima: ${weather}`, 110, y);
+
+      y += 10;
+
+      doc.text(`Data: ${date}`, 20, y);
+      doc.text(`Horário: ${time}`, 110, y);
+
+      y += 10;
+
+      doc.text(`Local: ${location}`, 20, y);
+
+      y += 20;
+
+      // OBSERVAÇÕES
+
+      doc.setFillColor(230, 230, 230);
+      doc.rect(15, y - 7, 180, 10, "F");
+
+      doc.setFontSize(14);
+      doc.text("Observações", 20, y);
+
+      y += 15;
+
+      doc.setFontSize(12);
+
+      const linhas = doc.splitTextToSize(notes, 165);
+
+      doc.text(linhas, 20, y);
+
+      y += (linhas.length * 7) + 25;
+
+      // FOTO
+
+      if (imageBase64) {
+
+        doc.setFillColor(230, 230, 230);
+        doc.rect(15, y - 7, 180, 10, "F");
+
+        doc.setFontSize(14);
+        doc.text("Foto da Captura", 20, y);
+
+        y += 15;
+
+        doc.addImage(imageBase64, 'JPEG', 45, y, 120, 90);
+
+        y += 110;
+      }
+
+      // ASSINATURA
+
+      doc.line(60, y, 150, y);
+
+      y += 8;
+
+      doc.setFontSize(11);
+      doc.text("Registro de Sessão de Pesca", 73, y);
+
+      // RODAPÉ
+
+      doc.setFontSize(9);
+
+      doc.setTextColor(100);
+
+      doc.text("Generated by Fishing Logbook System", 20, 290);
+
+      // SALVAR PDF
+
+      doc.save("registro_pesca.pdf");
+
+      alert("PDF gerado com sucesso!");
+
+    }
+
+  </script>
+
+</body>
+
+</html>
